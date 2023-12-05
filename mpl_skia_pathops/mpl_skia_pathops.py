@@ -52,7 +52,7 @@ def skia2mpl(skia_path):
                 codes.extend([MPath.CURVE3, MPath.CURVE3])
                 verts.extend(cc)
             elif len(cc) > 2:
-                # if len(c) > 2, multiple quad curve points are retuerned with
+                # if len(c) > 2, multiple quad curve points are returned with
                 # midpoints skipped and concatenated.
                 ccc = []
                 for i in range(0, len(cc)-2):
@@ -75,6 +75,7 @@ def skia2mpl(skia_path):
     p = MPath(verts, codes=codes)
     return p
 
+
 def union(path1, path2,
           fix_winding=True, keep_starting_points=False):
     builder = OpBuilder(fix_winding=fix_winding,
@@ -84,6 +85,18 @@ def union(path1, path2,
     result = builder.resolve()
 
     return result
+
+
+def union_all(pathlist,
+              fix_winding=True, keep_starting_points=False):
+    builder = OpBuilder(fix_winding=fix_winding,
+                        keep_starting_points=keep_starting_points)
+    for path in pathlist:
+        builder.add(path, PathOp.UNION)
+    result = builder.resolve()
+
+    return result
+
 
 def intersection(path1, path2,
                  fix_winding=True, keep_starting_points=False):
