@@ -3,6 +3,9 @@ from pathops import (
     Path,
     OpBuilder,
     PathOp,
+    PathOpsError,
+    LineCap,
+    LineJoin
 )
 
 from matplotlib.path import Path as MPath
@@ -127,3 +130,45 @@ def xor(path1, path2,
     result = builder.resolve()
 
     return result
+
+
+_TO_SKIA_LINE_CAP = {
+    "butt": LineCap.BUTT_CAP,
+    "round": LineCap.ROUND_CAP,
+    "square": LineCap.SQUARE_CAP,
+}
+
+_TO_SKIA_LINE_JOIN = {
+    "miter": LineJoin.MITER_JOIN,
+    "round": LineJoin.ROUND_JOIN,
+    "bevel": LineJoin.BEVEL_JOIN,
+    # No arcs or miter-clip
+}
+
+def stroke_to_fill(skpath, stroke_width: float,
+                   fractional_tolerence: float = 0.1,
+                   linejoin: str = "round",
+                   linecap: str = "round",
+                   fractional_miterlimit: float = 1.,
+                   ):
+    tolerance = stroke_width * fractional_tolerence
+    miterlimit = stroke_width * fractional_miterlimit
+    skpath = Path(skpath)
+    dash_array = ()
+    dash_offset = 0.0
+    skpath.stroke(stroke_width,
+                  _TO_SKIA_LINE_CAP[linecap],
+                  _TO_SKIA_LINE_JOIN[linejoin],
+                  miterlimit, dash_array, dash_offset)
+
+    skpath.convertConicsToQuads(tolerance)
+
+    backup = Path(skpath)
+    try:
+        skpath.simplify(fix_winding=True)
+    except PathOpsError:
+        # skip tricky paths that trigger PathOpsError
+        # https://github.com/googlefonts/picosvg/issues/192
+        skpath = backup
+
+    return skpath
