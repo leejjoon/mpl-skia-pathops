@@ -38,12 +38,16 @@ def mpl2skia(mpl_path, transform=None):
 
     return path
 
+from pathops._pathops import SegmentPenIterator
 
 def skia2mpl(skia_path):
     codes = []
     verts = []
-    for s, cc in skia_path.segments:
-        # print(s, cc)
+
+    # segments iterator does some simplification, which make things more complicated.
+    # We use SegmentPenIterator, instead.
+    for s, cc in list(SegmentPenIterator(skia_path)):
+
         if s == "moveTo":
             codes.extend([MPath.MOVETO] * len(cc))
             verts.extend(cc)
