@@ -1,101 +1,130 @@
-from .mpl_skia_pathops import mpl2skia, skia2mpl, union, intersection, difference, xor
+"""
+This module provide a helper class to us skia pathops as a patheffect in matplotlib.
+
+
+"""
+
+import warnings
+
+from matplotlib.patches import Patch
 
 from mpl_visual_context.patheffects_base import ChainablePathEffect
 import mpl_visual_context.patheffects  as pe
 
-class PathOpsPathEffect(ChainablePathEffect):
-    def __init__(self, pathops, op):
-        assert op in pathops._operators
-        self._pathops = pathops
-        self._op = op
+from .mpl_skia_pathops import mpl2skia, skia2mpl, union, intersection, difference, xor
+from .mpl_skia_pathops import stroke_to_fill
+
+
+class PathOpsPathEffectBase(ChainablePathEffect):
+    pass
+
+
+class PathOpsPathEffectStroke2Fill(PathOpsPathEffectBase):
+
+    def __init__(self, linewidth=None, joinstyle=None, linecap=None):
+        self._linewidth = linewidth
+        self._linejoin = joinstyle
+        self._linecap = linecap
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
-        tpath2 = affine.transform_path(tpath)
-        if self._op == "update_from":
-            self._pathops._skia_path = mpl2skia(tpath2)
+
+        stroke_width = self._linewidth if self._linewidth is not None else gc.get_linewidth()
+        if stroke_width == 0:
+            warnings.warn("stroke width of 0. skipping the path effect.")
             return renderer, gc, tpath, affine, rgbFace
+
+        linejoin = self._linejoin if self._linejoin is not None else gc.get_joinstyle()
+        linecap = self._linecap if self._linecap is not None else gc.get_capstyle()
+
+        path = skia2mpl(stroke_to_fill(mpl2skia(tpath),
+                                       stroke_width=stroke_width,
+                                       linecap=linecap,
+                                       linejoin=linejoin))
+
+        return renderer, gc, path, affine, rgbFace
+
+
+
+class PathOpsPathEffectBinary(PathOpsPathEffectBase):
+    _operators = dict(union=union, intersection=intersection, difference=difference, xor=xor)
+
+    def __init__(self, op, path, transform=None,
+                 lazy=False, invert=False):
+        assert op in self._operators
+
+        self._op = self._operators[op]
+        self._invert = invert
+
+        if callable(path):
+            lazy = True
+
+        self._lazy = lazy
+
+        if not lazy:
+            self._path, self._transform = self._get_path_transform(path, transform)
         else:
-            pathops = self._pathops.operate(self._op, mpl2skia(tpath2))
-            new_tpath = pathops.get_mpl_path()
-            new_tpath = affine.inverted().transform_path(new_tpath)
-            return renderer, gc, new_tpath, affine, rgbFace
+            self._path, self._transform = path, transform
 
-# FIXME This is used to update the pathops._skia_path on the fly within the
-# patheffects. There should be a better way to handle this.
-def reset(path1, path2):
-    return path2
+    def _get_path_transform(self, path, transform):
+        _transform = transform
+
+        if callable(path):
+            path = path()
+
+        if isinstance(path, Patch):
+            _path = path.get_path()
+            if _transform is None:
+                _transform = path.get_transform()
+        else:
+            _path = path
+
+        return _path, _transform
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+
+        if self._lazy:
+            _path, _transform = self._get_path_transform(self._path, self._transform)
+        else:
+            _path, _transform = self._path, self._transform
+
+        if _transform is None:
+            transform = affine.inverted()
+        else:
+            transform = _transform + affine.inverted()
+
+        transformed_target_path = transform.transform_path(_path)
+
+        if self._invert:
+            path = skia2mpl(self._op(mpl2skia(transformed_target_path), mpl2skia(tpath)))
+        else:
+            path = skia2mpl(self._op(mpl2skia(tpath), mpl2skia(transformed_target_path)))
+
+        return renderer, gc, path, affine, rgbFace
 
 
-class PathOps():
-    _operators = dict(union=union, intersection=intersection, difference=difference, xor=xor,
-                      update_from=reset)
-
-    def __init__(self, skia_path=None):
-        self._skia_path = skia_path
-
-    def get_skia_path(self):
-        return self._skia_path
+class PathOpsPathEffect(PathOpsPathEffectBinary, PathOpsPathEffectStroke2Fill):
+    @classmethod
+    def difference(cls, path, transform=None, invert=False, lazy=False):
+        return cls("difference", path, transform,
+                   invert=invert, lazy=lazy)
 
     @classmethod
-    def from_mpl_path(cls, mpl_path, transform=None):
-        return PathOpsFromPath(mpl_path, transform=transform)
+    def union(cls, path, transform=None, invert=False, lazy=False):
+        return cls("union", path, transform,
+                   invert=invert, lazy=lazy)
 
     @classmethod
-    def from_mpl_patch(cls, mpl_patch):
-        return PathOpsFromPatch(mpl_patch)
+    def intersection(cls, path, transform=None, invert=False, lazy=False):
+        return cls("intersection", path,
+                   transform, invert=invert, lazy=lazy)
 
     @classmethod
-    def from_func(cls, func):
-        return PathOpsFromFunc(func)
+    def xor(cls, path, transform=None, invert=False, lazy=False):
+        return cls("xor", path, transform,
+                   invert=invert, lazy=lazy)
 
-    def get_mpl_path(self):
-        return skia2mpl(self.get_skia_path())
-
-    def operate(self, op, skia_path):
-        skia_path = self._operators[op](self.get_skia_path(), skia_path)
-        return PathOps(skia_path)
-
-    def get_path_effect(self, op):
-        return PathOpsPathEffect(self, op)
-
-
-class PathOpsFromPath(PathOps):
-    def __init__(self, mpl_path, transform=None):
-        super().__init__()
-        self._mpl_path = mpl_path
-        self._transform = transform
-
-    def get_skia_path(self):
-        if self._transform is None:
-            mpath = self._mpl_path
-        else:
-            mpath = self._transform.transform_path(self._mpl_path)
-
-        return mpl2skia(mpath)
-
-class PathOpsFromPatch(PathOps):
-    def __init__(self, mpl_patch):
-        super().__init__()
-        self._mpl_patch = mpl_patch
-
-    def get_skia_path(self):
-        mpl_path = self._mpl_patch.get_path()
-        tr = self._mpl_patch.get_transform()
-
-        if tr is None:
-            mpath = mpl_path
-        else:
-            mpath = tr.transform_path(mpl_path)
-
-        return mpl2skia(mpath)
-
-class PathOpsFromFunc(PathOps):
-    def __init__(self, func):
-        super().__init__()
-        self._func = func
-
-    def get_skia_path(self):
-        mpath = self._func()
-        return mpl2skia(mpath)
+    @classmethod
+    def stroke2fill(cls):
+        return PathOpsPathEffectStroke2Fill()
 
 

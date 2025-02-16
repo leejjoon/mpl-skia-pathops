@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from pathops import (
     Path,
@@ -7,10 +9,14 @@ from pathops import (
     LineCap,
     LineJoin
 )
+from pathops._pathops import SegmentPenIterator
 
 from matplotlib.path import Path as MPath
 
+
 def mpl2skia(mpl_path, transform=None):
+    """Convert Matplotlib Path to Skia Path.
+    """
     if transform is not None:
         mpl_path = transform.transform_path(mpl_path)
 
@@ -38,9 +44,11 @@ def mpl2skia(mpl_path, transform=None):
 
     return path
 
-from pathops._pathops import SegmentPenIterator
 
 def skia2mpl(skia_path):
+    """Convert Skia Path to Matplotlib Path.
+    """
+
     codes = []
     verts = []
 
@@ -85,6 +93,7 @@ def skia2mpl(skia_path):
 
 def union(path1, path2,
           fix_winding=True, keep_starting_points=False):
+    "return the union of two Skia paths"
     builder = OpBuilder(fix_winding=fix_winding,
                         keep_starting_points=keep_starting_points)
     builder.add(path1, PathOp.UNION)
@@ -96,6 +105,7 @@ def union(path1, path2,
 
 def union_all(pathlist,
               fix_winding=True, keep_starting_points=False):
+    "return the union of Skia paths"
     builder = OpBuilder(fix_winding=fix_winding,
                         keep_starting_points=keep_starting_points)
     for path in pathlist:
@@ -107,6 +117,7 @@ def union_all(pathlist,
 
 def intersection(path1, path2,
                  fix_winding=True, keep_starting_points=False):
+    "return the intersection of two Skia paths"
     builder = OpBuilder(fix_winding=fix_winding,
                         keep_starting_points=keep_starting_points)
     builder.add(path1, PathOp.UNION)
@@ -117,6 +128,7 @@ def intersection(path1, path2,
 
 def difference(path1, path2,
                fix_winding=True, keep_starting_points=False):
+    "return the difference of two Skia paths"
     builder = OpBuilder(fix_winding=fix_winding,
                         keep_starting_points=keep_starting_points)
     builder.add(path1, PathOp.UNION)
@@ -127,6 +139,7 @@ def difference(path1, path2,
 
 def xor(path1, path2,
         fix_winding=True, keep_starting_points=False):
+    "return the xor of two Skia paths"
     builder = OpBuilder(fix_winding=fix_winding,
                         keep_starting_points=keep_starting_points)
     builder.add(path1, PathOp.UNION)
@@ -154,7 +167,10 @@ def stroke_to_fill(skpath, stroke_width: float,
                    linejoin: str = "round",
                    linecap: str = "round",
                    fractional_miterlimit: float = 1.,
+                   skip_fail=False
                    ):
+    "convert stroke to fill"
+
     tolerance = stroke_width * fractional_tolerence
     miterlimit = stroke_width * fractional_miterlimit
     skpath = Path(skpath)
@@ -173,6 +189,16 @@ def stroke_to_fill(skpath, stroke_width: float,
     except PathOpsError:
         # skip tricky paths that trigger PathOpsError
         # https://github.com/googlefonts/picosvg/issues/192
+        if not skip_fail:
+            raise
+        warnings.warn("Failed to convert path.")
         skpath = backup
 
     return skpath
+
+
+if __name__ == '__main__':
+    from matplotlib.text import TextPath
+    p = TextPath((0, 0), "MA", size=20)
+
+    skpath = mpl2skia(p)
