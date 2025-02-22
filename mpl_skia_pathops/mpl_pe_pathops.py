@@ -18,13 +18,22 @@ from .mpl_skia_pathops import stroke_to_fill
 class PathOpsPathEffectBase(ChainablePathEffect):
     pass
 
+from typing import Literal, Tuple
 
 class PathOpsPathEffectStroke2Fill(PathOpsPathEffectBase):
 
-    def __init__(self, linewidth=None, joinstyle=None, linecap=None):
+    def __init__(self, linewidth: float | None =None,
+                 joinstyle: Literal["miter", "round", "bevel"] | None =None,
+                 linecap: Literal["butt", "round", "square"] | None =None,
+                 dashes: Tuple[float | None, Tuple[float] | None] | None = None,
+                 ):
+        """
+        if None, use values from the GC.
+        """
         self._linewidth = linewidth
         self._linejoin = joinstyle
         self._linecap = linecap
+        self._dashes = dashes
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
 
@@ -36,10 +45,14 @@ class PathOpsPathEffectStroke2Fill(PathOpsPathEffectBase):
         linejoin = self._linejoin if self._linejoin is not None else gc.get_joinstyle()
         linecap = self._linecap if self._linecap is not None else gc.get_capstyle()
 
+        dashes = self._dashes if self._dashes is not None else gc.get_dashes()
+
         path = skia2mpl(stroke_to_fill(mpl2skia(tpath),
                                        stroke_width=stroke_width,
                                        linecap=linecap,
-                                       linejoin=linejoin))
+                                       linejoin=linejoin,
+                                       dashes=dashes
+                                       ))
 
         return renderer, gc, path, affine, rgbFace
 
@@ -124,7 +137,11 @@ class PathOpsPathEffect(PathOpsPathEffectBinary, PathOpsPathEffectStroke2Fill):
                    invert=invert, lazy=lazy)
 
     @classmethod
-    def stroke2fill(cls):
-        return PathOpsPathEffectStroke2Fill()
+    def stroke2fill(cls, linewidth: float | None =None,
+                    joinstyle: Literal["miter", "round", "bevel"] | None =None,
+                    linecap: Literal["butt", "round", "square"] | None =None,
+                    dashes: Tuple[float | None, Tuple[float]] | None = None,
+                    ):
 
-
+        return PathOpsPathEffectStroke2Fill(linewidth=linewidth, joinstyle=joinstyle,
+                                            linecap=linecap, dashes=dashes)

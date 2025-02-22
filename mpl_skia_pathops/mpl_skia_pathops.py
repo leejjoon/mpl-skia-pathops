@@ -162,20 +162,26 @@ _TO_SKIA_LINE_JOIN = {
     # No arcs or miter-clip
 }
 
+from typing import Literal, Tuple
+
 def stroke_to_fill(skpath, stroke_width: float,
                    fractional_tolerence: float = 0.1,
-                   linejoin: str = "round",
-                   linecap: str = "round",
+                   linejoin: Literal["miter", "round", "bevel"] ="round",
+                   linecap: Literal["butt", "round", "square"] ="round",
                    fractional_miterlimit: float = 1.,
+                   dashes: Tuple[float | None, Tuple[float] | None] = (None, None),
                    skip_fail=False
                    ):
     "convert stroke to fill"
 
     tolerance = stroke_width * fractional_tolerence
     miterlimit = stroke_width * fractional_miterlimit
+
+    dash_offset, dash_array = dashes
+    dash_offset = 0. if dash_offset is None else dash_offset
+    dash_array = () if dash_array is None else dash_array
+
     skpath = Path(skpath)
-    dash_array = ()
-    dash_offset = 0.0
     skpath.stroke(stroke_width,
                   _TO_SKIA_LINE_CAP[linecap],
                   _TO_SKIA_LINE_JOIN[linejoin],
