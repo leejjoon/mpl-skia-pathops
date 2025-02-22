@@ -25,7 +25,7 @@ class PathOpsPathEffectStroke2Fill(PathOpsPathEffectBase):
     def __init__(self, linewidth: float | None =None,
                  joinstyle: Literal["miter", "round", "bevel"] | None =None,
                  linecap: Literal["butt", "round", "square"] | None =None,
-                 dashes: Tuple[float | None, Tuple[float] | None] | None = None,
+                 dashes: Tuple[float | None, Tuple[float, float] | None] | None = None,
                  ):
         """
         if None, use values from the GC.

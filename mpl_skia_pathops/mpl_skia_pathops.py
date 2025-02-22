@@ -169,7 +169,7 @@ def stroke_to_fill(skpath, stroke_width: float,
                    linejoin: Literal["miter", "round", "bevel"] ="round",
                    linecap: Literal["butt", "round", "square"] ="round",
                    fractional_miterlimit: float = 1.,
-                   dashes: Tuple[float | None, Tuple[float] | None] = (None, None),
+                   dashes: Tuple[float | None, Tuple[float, float] | None] = (None, None),
                    skip_fail=False
                    ):
     "convert stroke to fill"
