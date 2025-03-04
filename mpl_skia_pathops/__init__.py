@@ -10,11 +10,14 @@ from ._version import __version__
 
 __all__ = ["mpl2skia", "skia2mpl", "union", "union_all", "intersection", "difference", "xor",
            "stroke_to_fill",
-           "PathOpsPathEffect"]
+           "SkiaPath",
+           "PathOpsPathEffect",
+           ]
            # "PathOps", "PathOpsFromFunc", "PathOpsFromPatch", "PathOpsFromPath"]
 
 from .mpl_skia_pathops import (mpl2skia, skia2mpl, union, union_all,
                                intersection, difference, xor,
-                               stroke_to_fill)
+                               stroke_to_fill,
+                               SkiaPath)
 from .mpl_pe_pathops import (PathOpsPathEffect,)
                              # PathOps, PathOpsFromFunc, PathOpsFromPatch, PathOpsFromPath)
