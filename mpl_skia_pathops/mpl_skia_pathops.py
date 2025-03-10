@@ -8,7 +8,8 @@ from pathops import (
     PathOp,
     PathOpsError,
     LineCap,
-    LineJoin
+    LineJoin,
+    PathEffect
 )
 from pathops._pathops import SegmentPenIterator
 
@@ -209,6 +210,46 @@ def stroke_to_fill(skpath, stroke_width: float,
         skpath = backup
 
     return skpath
+
+
+def stroke_with_patheffect(skpath,
+                           stroke_width: float,
+                           patheffect: PathEffect,
+                           fractional_tolerence: float = 0.1,
+                           linejoin: Literal["miter", "round", "bevel"] ="round",
+                           linecap: Literal["butt", "round", "square"] ="round",
+                           fractional_miterlimit: float = 1.,
+                           skip_fail=False
+                   ):
+    "convert stroke to fill"
+
+    tolerance = stroke_width * fractional_tolerence
+    miterlimit = stroke_width * fractional_miterlimit
+
+    skpath = Path(skpath)
+    skpath.stroke_with_patheffect(stroke_width,
+                                  _TO_SKIA_LINE_CAP[linecap],
+                                  _TO_SKIA_LINE_JOIN[linejoin],
+                                  miterlimit,
+                                  patheffect
+                                  )
+
+    skpath.convertConicsToQuads(tolerance)
+
+    backup = Path(skpath)
+    try:
+        skpath.simplify(fix_winding=True)
+    except PathOpsError:
+        # skip tricky paths that trigger PathOpsError
+        # https://github.com/googlefonts/picosvg/issues/192
+        if not skip_fail:
+            raise
+        warnings.warn("Failed to convert path.")
+        skpath = backup
+
+    return skpath
+
+
 
 
 def mpl2skia(p, trans=None):
