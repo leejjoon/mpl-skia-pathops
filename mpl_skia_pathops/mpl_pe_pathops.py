@@ -145,3 +145,30 @@ class PathOpsPathEffect(PathOpsPathEffectBinary, PathOpsPathEffectStroke2Fill):
 
         return PathOpsPathEffectStroke2Fill(linewidth=linewidth, joinstyle=joinstyle,
                                             linecap=linecap, dashes=dashes)
+
+
+class ContourSelector(ChainablePathEffect):
+
+    def __init__(self, selector):
+        """
+        The selector should be a function of a following signature, where i is an index of
+        the contour and c is the contour itself.
+
+        def selector(i, c):
+            pass
+
+
+
+        """
+        self._selector = selector
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        spath = mpl2skia(tpath)
+        spath_new = type(spath)()
+        pen = spath_new.getPen()
+        for c in [c for i, c in enumerate(spath.contours) if self._selector(i, c)]:
+            c.draw(pen)
+
+        tpath2 = skia2mpl(spath_new)
+
+        return renderer, gc, tpath2, affine, rgbFace
