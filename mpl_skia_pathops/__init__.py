@@ -12,6 +12,7 @@ __all__ = ["mpl2skia", "skia2mpl", "union", "union_all", "intersection", "differ
            "stroke_to_fill",
            "SkiaPath",
            "PathOpsPathEffect",
+           "SkiaShadow", "make_shadow_patheffects"
            ]
            # "PathOps", "PathOpsFromFunc", "PathOpsFromPatch", "PathOpsFromPath"]
 
@@ -20,4 +21,7 @@ from .mpl_skia_pathops import (mpl2skia, skia2mpl, union, union_all,
                                stroke_to_fill,
                                SkiaPath)
 from .mpl_pe_pathops import (PathOpsPathEffect,)
+                             # PathOps, PathOpsFromFunc, PathOpsFromPatch, PathOpsFromPath)
+
+from .pe_skia_shadow import (SkiaShadow, make_shadow_patheffects)
                              # PathOps, PathOpsFromFunc, PathOpsFromPatch, PathOpsFromPath)
