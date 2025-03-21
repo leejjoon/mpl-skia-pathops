@@ -11,8 +11,8 @@ from matplotlib.patches import Patch
 from mpl_visual_context.patheffects_base import ChainablePathEffect
 import mpl_visual_context.patheffects  as pe
 
-from .mpl_skia_pathops import mpl2skia, skia2mpl, union, intersection, difference, xor
-from .mpl_skia_pathops import stroke_to_fill
+from .mpl_skia_pathops_helper import mpl2skia, skia2mpl, union, intersection, difference, xor
+from .mpl_skia_pathops_helper import stroke_to_fill
 
 
 class PathOpsPathEffectBase(ChainablePathEffect):

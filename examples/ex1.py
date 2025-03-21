@@ -1,3 +1,10 @@
+"""
+====================
+Simple patheffect example
+====================
+
+"""
+
 import matplotlib.pyplot as plt
 import mpl_visual_context.patheffects  as pe
 from matplotlib.transforms import Affine2D

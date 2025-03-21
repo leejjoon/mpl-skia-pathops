@@ -1,3 +1,10 @@
+"""
+====================
+Text Outline
+====================
+
+"""
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from matplotlib.text import TextPath

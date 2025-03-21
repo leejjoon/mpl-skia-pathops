@@ -1,3 +1,9 @@
+"""
+====================
+Simple patheffect example
+====================
+
+"""
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -10,6 +16,12 @@ np.random.seed(19680)
 
 # Example data
 n = 4
+"""
+====================
+another patheffect example
+====================
+
+"""
 x_pos = np.arange(n)
 performance = 5 * np.random.rand(n)
 colors = [f"C{i}" for i in range(n)]

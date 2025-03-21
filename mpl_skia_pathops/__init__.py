@@ -15,7 +15,7 @@ __all__ = ["mpl2skia", "skia2mpl", "union", "union_all", "intersection", "differ
            "SkiaShadow", "make_shadow_patheffects"
            ]
 
-from .mpl_skia_pathops import (mpl2skia, skia2mpl, union, union_all,
+from .mpl_skia_pathops_helper import (mpl2skia, skia2mpl, union, union_all,
                                intersection, difference, xor,
                                stroke_to_fill,
                                SkiaPath)

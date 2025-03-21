@@ -1,3 +1,10 @@
+"""
+====================
+Path clipping example
+====================
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath

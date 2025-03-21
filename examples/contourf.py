@@ -1,3 +1,10 @@
+"""
+====================
+Contour Example
+====================
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import mpl_visual_context.patheffects as pe
@@ -39,31 +46,17 @@ Z = -np.sqrt(X ** 2 + Y ** 2)
 # Contour
 fig, ax = plt.subplots(1, 1, num=2, clear=True)
 
-# ax = axs[0]
 ax.set_aspect(1)
 contours = ax.contourf(X, Y, Z)
-# contours.remove()
 
-from mpl_inner_title import add_inner_title
-at = add_inner_title(ax, "A", loc=2, style=None, extra_prop=dict(color="w", size=30),
-                     extra_kwargs=dict(frameon=False))
+ann = ax.annotate("A", (0, 1), xycoords="axes fraction",
+                  xytext=(15, -15), textcoords="offset points", va="top", ha="left", size=50)
 
 patheffects1 = make_shadow_patheffects(fc_black="k", offset=2, angle=45, alpha=0.8)[:-1]
 patheffects2 = make_shadow_patheffects(fc_black="k", offset=1, angle=45, alpha=1.)[:]
 patheffects = patheffects1 + patheffects2
-t = at.txt._text
 
-# t = ax.text(2, 2, "A", fontsize=30, color="none")
-# t.set_path_effects(patheffects + [pe.FillOnly()])
-t.set_path_effects(patheffects)
-
-
-# ax = axs[1]
-# ax.set_aspect(1)
-# contours = ax.contourf(X, Y, Z)
-# contours.remove()
-
-# %%
+ann.set_path_effects(patheffects)
 
 
 def add_contour_shadow(ax, contours,
@@ -105,14 +98,7 @@ def add_contour_shadow(ax, contours,
             p = ax.add_patch(PathPatch(path, fc="none", ec="none", zorder=zorder+1))
             p.set_path_effects(patheffects)
 
-    # Now we add patheffects.
-
-    # for p in ax.patches:
-    #     p.set_path_effects(patheffects)
-
-
 add_contour_shadow(ax, contours, fc_white=None, offset=3, angle=45, alpha=0.6)
-# add_contour_shadow(ax, contours, offset=3., angle=45, alpha=0.5)
 add_contour_shadow(ax, contours, offset=1., angle=45, alpha=0.8)
 
 plt.show()
