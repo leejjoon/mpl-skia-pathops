@@ -96,7 +96,11 @@ def skia2mpl(skia_path):
             codes.append(MPath.CLOSEPOLY)
             verts.extend([(0, 0)])
 
+    if len(verts) == 0:
+        verts = np.array([]).reshape((0, 2))
+
     p = MPath(verts, codes=codes)
+
     return p
 
 
